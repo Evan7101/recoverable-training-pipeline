@@ -64,3 +64,11 @@ python3 toy/train_recoverable.py selftest
 - `toy/recovery-baseline.py` 是任务书自带基线，保持原样（含其 cwd 相对行为）：它在**当前工作目录**写入 `checkpoint.json`，从仓库根目录运行会生成根目录的 `checkpoint.json`；`toy/checkpoint.json` 是 `toy/check_riskiest_assumption.py` 生成的。
 - `mlp/data/`（MNIST，约 11MB）不入库，首次运行自动从 torchvision 默认镜像（ossci S3）下载。
 - 实现工作有 AI 辅助；规划、验收、风险判断与全部决策文档为负责人亲笔（详见各文档披露声明）。
+
+## 最终交付
+
+- **交付修改**：任务基线扩展为两层实验——机制层 toy（全状态 checkpoint、切分点 1–9 位级等价验证、5 例显式失败负例）与真实模型层 PyTorch MLP（全状态 / 丢优化器 / 丢 RNG 三档恢复对比）；三份交付文档 `docs/PLAN.md`、`docs/RISK-ASSUMPTION.md`、`docs/DECISIONS.md`；支撑证据 `docs/REPORT.md` 与全部运行记录入库；目录重组为 `docs/ brief/ toy/ mlp/`（git mv 保留历史）。
+- **运行说明**：见上文「运行」一节——机制层仅需 Python 3 标准库；MLP 层需 torch/torchvision（集群复用 `pytorch_gpu_2.0.1` 环境），MNIST 首次运行自动下载到 `mlp/data/`。
+- **结果**：机制层全状态恢复在切分点 1–9 逐步位级一致（含 RNG 覆盖测试）；MLP 层全状态恢复默认容差内一致、最终精度无差异（0.882，epoch 边界与中周期两个切分点复现）；两类部分恢复实测改变最终精度（|Δacc| 0.8–2.0%）；两层共 10 例负例全部显式失败（exit=2、可读报错）；全部关键结果经负责人独立复跑验证（含输出哈希比对）。
+- **未解决问题**：见 `docs/REPORT.md` §5A 未验证风险登记——最关键三条：语义级损坏（语法合法但值错误）当前不可检、GPU/多线程场景仅文献级证据、部分恢复偏差量级不可跨规模外推。
+- **后续行动**：P0/P1 事项已全部关闭，无阻塞遗留。可选改进：为 checkpoint 增加校验和以关闭语义级损坏风险；GPU/多线程环境下的等价性实测；真实规模下的部分恢复偏差收敛研究。
