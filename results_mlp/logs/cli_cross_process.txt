@@ -1,0 +1,12 @@
+$ python train_mlp.py run --epochs 1 --out results_mlp/checkpoints/cli_epoch1.pt
+{"epochs": [{"epoch": 1, "train_loss": 1.428710401058197, "lr": 0.05}], "step": 32, "test_accuracy": 0.82, "checkpoint_saved": "results_mlp/checkpoints/cli_epoch1.pt"}
+exit=0
+
+$ python train_mlp.py run --epochs 3 --out results_mlp/checkpoints/cli_full.pt
+{"epochs": [{"epoch": 1, "train_loss": 1.428710401058197, "lr": 0.05}, {"epoch": 2, "train_loss": 0.4963734280318022, "lr": 0.04000000000000001}, {"epoch": 3, "train_loss": 0.36271160608157516, "lr": 0.03200000000000001}], "step": 96, "test_accuracy": 0.882, "checkpoint_saved": "results_mlp/checkpoints/cli_full.pt"}
+exit=0
+
+$ python train_mlp.py run --epochs 3 --resume results_mlp/checkpoints/cli_epoch1.pt
+resumed from results_mlp/checkpoints/cli_epoch1.pt: epoch_start=1 step=32 skip=0 fresh_optimizer=False fresh_rng=False
+{"epochs": [{"epoch": 2, "train_loss": 0.4963734280318022, "lr": 0.04000000000000001}, {"epoch": 3, "train_loss": 0.36271160608157516, "lr": 0.03200000000000001}], "step": 96, "test_accuracy": 0.882}
+exit=0

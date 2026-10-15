@@ -1,0 +1,8 @@
+$ python train_mlp.py run --epochs 1 --resume results_mlp/checkpoints/cli_full.pt   # step 96 > capacity 32
+ERROR: requested epochs 1 is behind checkpoint step 96 (refusing to go backwards)
+exit=2
+
+$ python train_mlp.py run --epochs 1 --resume results_mlp/checkpoints/cli_epoch1.pt  # idempotent no-op
+resumed from results_mlp/checkpoints/cli_epoch1.pt: epoch_start=1 step=32 skip=0 fresh_optimizer=False fresh_rng=False
+{"epochs": [], "step": 32, "test_accuracy": 0.82}
+exit=0

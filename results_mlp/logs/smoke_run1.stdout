@@ -1,0 +1,1 @@
+{"epochs": [{"epoch": 1, "train_loss": 1.428710401058197, "lr": 0.05}], "step": 32, "test_accuracy": 0.82}

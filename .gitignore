@@ -1,0 +1,13 @@
+# 数据集（首次运行 train_mlp.py 时自动从 ossci 镜像下载）
+data_mlp/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# checkpoint 原子写入的临时文件
+.ckpt_*.tmp
+
+# 系统
+.DS_Store

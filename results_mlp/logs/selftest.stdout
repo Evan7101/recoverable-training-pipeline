@@ -1,0 +1,5 @@
+PASS: missing file (exit=2, stderr=nonempty, traceback=no)
+PASS: truncated/corrupt checkpoint (exit=2, stderr=nonempty, traceback=no)
+PASS: wrong format_version (exit=2, stderr=nonempty, traceback=no)
+PASS: missing required key (optimizer) (exit=2, stderr=nonempty, traceback=no)
+PASS: field 'epoch' has wrong type (str) (exit=2, stderr=nonempty, traceback=no)
