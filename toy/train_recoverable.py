@@ -25,6 +25,7 @@ Usage:
 import argparse
 import json
 import os
+import pathlib
 import random
 import subprocess
 import sys
@@ -32,6 +33,8 @@ import tempfile
 
 FORMAT_VERSION = 1
 REQUIRED_KEYS = ("format_version", "step", "weight", "velocity", "rng_state", "total_steps")
+
+RESULTS_DIR = pathlib.Path(__file__).resolve().parent / "results"
 
 LR = 0.2
 MU = 0.9
@@ -197,7 +200,7 @@ def cmd_run(args):
 def cmd_compare(args):
     total = args.total
     splits = sorted(args.splits)
-    os.makedirs("results", exist_ok=True)
+    os.makedirs(RESULTS_DIR, exist_ok=True)
 
     random.seed(42)
     ref_state, ref_traj = run_training(total)
@@ -217,7 +220,7 @@ def cmd_compare(args):
         if not (0 < n < total):
             print(f"split {n} must be in (0, {total})", file=sys.stderr)
             sys.exit(2)
-        ckpt_path = os.path.join("results", f"ckpt_split_{n}.json")
+        ckpt_path = os.path.join(RESULTS_DIR, f"ckpt_split_{n}.json")
         random.seed(42)
         part_state, part_traj = run_training(n)
         save_checkpoint(part_state, ckpt_path)
@@ -246,7 +249,7 @@ def cmd_compare(args):
     # --- partial recovery: no rng_state restore ---
     partial_results = []
     for n in splits:
-        ckpt_path = os.path.join("results", f"ckpt_split_{n}.json")
+        ckpt_path = os.path.join(RESULTS_DIR, f"ckpt_split_{n}.json")
         random.seed(999)
         res_state, res_traj = run_training(total, ckpt_path,
                                            restore_rng=False)
@@ -260,7 +263,7 @@ def cmd_compare(args):
         out("")
 
     text = "\n".join(lines) + "\n"
-    with open(os.path.join("results", "equivalence.md"), "w") as f:
+    with open(os.path.join(RESULTS_DIR, "equivalence.md"), "w") as f:
         f.write(text)
     print(text, end="")
 
@@ -270,7 +273,7 @@ def cmd_compare(args):
 
 
 def cmd_selftest(args):
-    os.makedirs("results", exist_ok=True)
+    os.makedirs(RESULTS_DIR, exist_ok=True)
     script = os.path.abspath(__file__)
     workdir = tempfile.mkdtemp(prefix="negtest_")
 
@@ -340,7 +343,7 @@ def cmd_selftest(args):
               f"stderr={'nonempty' if proc.stderr.strip() else 'EMPTY'}, "
               f"traceback={'no' if no_traceback else 'YES'})")
 
-    with open(os.path.join("results", "negative_tests.txt"), "w") as f:
+    with open(os.path.join(RESULTS_DIR, "negative_tests.txt"), "w") as f:
         f.write("\n".join(report))
     sys.exit(0 if all_ok else 1)
 

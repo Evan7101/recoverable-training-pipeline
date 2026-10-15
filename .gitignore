@@ -1,5 +1,5 @@
-# 数据集（首次运行 train_mlp.py 时自动从 ossci 镜像下载）
-data_mlp/
+# 数据集（首次运行 mlp/train_mlp.py 时自动从 ossci 镜像下载）
+mlp/data/
 
 # Python
 __pycache__/

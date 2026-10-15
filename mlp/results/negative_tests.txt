@@ -1,0 +1,29 @@
+=== missing file ===
+status: PASS
+exit code: 2
+stderr: ERROR: checkpoint file not found: /tmp/negtest_mlp_msp7t66a/does_not_exist.pt (refusing to start from scratch)
+stdout: 
+
+=== truncated/corrupt checkpoint ===
+status: PASS
+exit code: 2
+stderr: ERROR: checkpoint /tmp/negtest_mlp_msp7t66a/truncated.pt is corrupt/truncated or unreadable: RuntimeError: PytorchStreamReader failed reading zip archive: failed finding central directory
+stdout: 
+
+=== wrong format_version ===
+status: PASS
+exit code: 2
+stderr: ERROR: unsupported format_version 999 in /tmp/negtest_mlp_msp7t66a/bad_version.pt (this program understands version 1)
+stdout: 
+
+=== missing required key (optimizer) ===
+status: PASS
+exit code: 2
+stderr: ERROR: checkpoint /tmp/negtest_mlp_msp7t66a/missing_key.pt missing required key(s): optimizer
+stdout: 
+
+=== field 'epoch' has wrong type (str) ===
+status: PASS
+exit code: 2
+stderr: ERROR: checkpoint /tmp/negtest_mlp_msp7t66a/bad_field_type.pt field 'epoch' must be a non-negative int, got str: 'abc'
+stdout: 

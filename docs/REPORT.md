@@ -6,16 +6,19 @@
 
 ## 1. 运行命令（全部可复现）
 
+以下命令在仓库根目录（`recovery-baseline/`）执行；机制层用系统 `python3`，真实模型层用集群共享环境解释器 `/hpc2ssd/softwares/anaconda3/envs/pytorch_gpu_2.0.1/bin/python`。
+
 ```bash
-cd recovery-baseline
-python3 recovery-baseline.py                                   # 基线
-python3 check_riskiest_assumption.py                           # 风险假设最小检查
-python3 train_recoverable.py run --total 10                    # 不间断运行
-python3 train_recoverable.py run --total 4 --save-checkpoint results/manual_ckpt.json   # 中断并保存
-python3 train_recoverable.py run --total 10 --checkpoint results/manual_ckpt.json       # 恢复
-python3 train_recoverable.py compare --total 10 --splits 4 7   # 等价性对比
-python3 train_recoverable.py compare --total 10 --splits 1 2 3 4 5 6 7 8 9  # 全切分点扫掠
-python3 train_recoverable.py selftest                          # 负例测试
+python3 toy/recovery-baseline.py                                   # 基线（写入 cwd 的 checkpoint.json）
+python3 toy/check_riskiest_assumption.py                           # 风险假设最小检查
+python3 toy/train_recoverable.py run --total 10                    # 不间断运行
+python3 toy/train_recoverable.py run --total 4 --save-checkpoint toy/results/manual_ckpt.json   # 中断并保存
+python3 toy/train_recoverable.py run --total 10 --checkpoint toy/results/manual_ckpt.json       # 恢复
+python3 toy/train_recoverable.py compare --total 10 --splits 4 7   # 等价性对比
+python3 toy/train_recoverable.py compare --total 10 --splits 1 2 3 4 5 6 7 8 9  # 全切分点扫掠
+python3 toy/train_recoverable.py selftest                          # 负例测试
+/hpc2ssd/softwares/anaconda3/envs/pytorch_gpu_2.0.1/bin/python mlp/train_mlp.py compare --epochs 3 --split-epoch 1 --split-batch 47
+/hpc2ssd/softwares/anaconda3/envs/pytorch_gpu_2.0.1/bin/python mlp/train_mlp.py selftest
 ```
 
 ## 2. 模型与 checkpoint 设计
@@ -33,7 +36,7 @@ python3 train_recoverable.py selftest                          # 负例测试
 | 全状态恢复（含 rng_state；恢复前全局 RNG 已被 `seed(999)` 覆盖） | 1–9（全部 9 个） | **BIT-EXACT: True ×9**——每个切分点 10/10 步逐步一致 |
 | 部分恢复（不恢复 rng_state，独立重播种） | 1–9（全部 9 个） | 每个切分点均可测发散，最大逐步权重偏差 0.00095377–0.0240948 |
 
-切分点 4、7 的早期结果（0.0240948 / 0.00893984）与全扫掠一致。完整逐步表格见 `results/equivalence.md`。RNG 覆盖测试说明：恢复不是"碰巧撞上同一随机序列"，而是从保存的 `rng_state` 真实还原。
+切分点 4、7 的早期结果（0.0240948 / 0.00893984）与全扫掠一致。完整逐步表格见 `toy/results/equivalence.md`。RNG 覆盖测试说明：恢复不是"碰巧撞上同一随机序列"，而是从保存的 `rng_state` 真实还原。
 
 ### 3.2 负例测试（`selftest`，5/5 通过）
 
@@ -45,11 +48,11 @@ python3 train_recoverable.py selftest                          # 负例测试
 | 缺必需字段（velocity） | 2 | `ERROR: checkpoint … missing required key(s): velocity` |
 | 字段类型错误（step 为字符串） | 2 | `ERROR: checkpoint … field 'step' must be a non-negative int, got str: 'abc'` |
 
-全部输出见 `results/negative_tests.txt`。五个案例的 stderr 均可读且不含 Python traceback。另一处显式失败（不属于 checkpoint 损坏但属于不一致请求）：resume 时 `--total` 小于 checkpoint 的 step，报 `ERROR: requested total steps 2 is behind checkpoint step 4 (refusing to go backwards)`（exit=2）；`--total` 等于 checkpoint step 视为幂等 no-op，允许成功。行为承诺：缺失/不兼容/不一致时显式失败，**绝不静默继续或静默初始化**。
+全部输出见 `toy/results/negative_tests.txt`。五个案例的 stderr 均可读且不含 Python traceback。另一处显式失败（不属于 checkpoint 损坏但属于不一致请求）：resume 时 `--total` 小于 checkpoint 的 step，报 `ERROR: requested total steps 2 is behind checkpoint step 4 (refusing to go backwards)`（exit=2）；`--total` 等于 checkpoint step 视为幂等 no-op，允许成功。行为承诺：缺失/不兼容/不一致时显式失败，**绝不静默继续或静默初始化**。
 
 ### 3.3 失败案例
 
-机制层：恢复轨迹的逐步对比最初只记录切分后的步，导致对比表错位——通过合并切分前段轨迹修复。真实模型层开发中另发现并修复两个真实 bug（详见 `results_mlp/run_log.md`）：(a) 中周期停止时 epoch 字段提前推进、`scheduler.step()` 提前调用，造成 epoch/step 不一致；(b) torch 2.0.1 的 `RandomSampler` 每轮迭代重新 `randperm`，naive 中周期续跑会拿到**下一轮**的数据排列（逐步损失差立即达 0.44）——通过对 shuffle generator 做 epoch 起点快照并在中周期停止时回绕修复。后者表明"DataLoader 采样状态"不是一句口号，而是有真实陷阱的恢复面。
+机制层：恢复轨迹的逐步对比最初只记录切分后的步，导致对比表错位——通过合并切分前段轨迹修复。真实模型层开发中另发现并修复两个真实 bug（详见 `mlp/results/run_log.md`）：(a) 中周期停止时 epoch 字段提前推进、`scheduler.step()` 提前调用，造成 epoch/step 不一致；(b) torch 2.0.1 的 `RandomSampler` 每轮迭代重新 `randperm`，naive 中周期续跑会拿到**下一轮**的数据排列（逐步损失差立即达 0.44）——通过对 shuffle generator 做 epoch 起点快照并在中周期停止时回绕修复。后者表明"DataLoader 采样状态"不是一句口号，而是有真实陷阱的恢复面。
 
 ### 3.4 真实模型层结果（T5，容差级主张）
 
@@ -68,9 +71,9 @@ python3 train_recoverable.py selftest                          # 负例测试
 - 全状态恢复在默认容差下一致、指标无差异；位级一致被观察到，但按预写边界仅作观察——单线程 CPU + 全确定性开关 + 四源 RNG 全纳入是受控特例（R1 调研已说明不具外推性）。
 - 两类部分恢复都改变最终指标（|Δacc| 0.8–2.0%）——"部分恢复必须披露"从 toy 机制结论升级为真实模型层的实测结论。
 - 负例 5/5 显式失败（缺失/损坏/版本不兼容/缺键/类型错），语义与机制层一致；倒退式 resume 拒绝、等步 resume 幂等。
-- 数据：MNIST 经 torchvision 默认 ossci S3 镜像下载成功（yann.lecun.com 源已弃用），存于 `data_mlp/`；未使用合成数据回退。
-- 负责人独立复跑 `compare`：exit=0，`equivalence.md` 字节级一致（md5 相同）。
-- 完整表格与逐 epoch 损失见 `results_mlp/equivalence.md`。
+- 数据：MNIST 经 torchvision 默认 ossci S3 镜像下载成功（yann.lecun.com 源已弃用），存于 `mlp/data/`；未使用合成数据回退。
+- 负责人独立复跑 `compare`：exit=0，`mlp/results/equivalence.md` 字节级一致（md5 相同）。
+- 完整表格与逐 epoch 损失见 `mlp/results/equivalence.md`。
 
 ## 4. 已验证的保证 vs 未建立的保证
 
@@ -88,9 +91,9 @@ python3 train_recoverable.py selftest                          # 负例测试
 5. 跨 Python/库版本的 `rng_state` 兼容性未验证。
 6. T5 仅覆盖单线程 CPU、torch 2.0.1、MLP + MNIST 子集（2000/500）；真实规模、真实数据管道、跨版本均未建立。
 
-诚实边界（引用 R1 调研，来源：PyTorch Reproducibility 文档等，见 `PLAN.md` 第 2 节）：checkpoint 保证"状态无丢失地继续"，**不**保证"与从未中断的世界线逐位重合"；生产环境中最强可辩护主张是同硬件同软件下的容差内一致，跨硬件仅有统计等价。
+诚实边界（引用 R1 调研，来源：PyTorch Reproducibility 文档等，见 `docs/PLAN.md` 第 2 节）：checkpoint 保证"状态无丢失地继续"，**不**保证"与从未中断的世界线逐位重合"；生产环境中最强可辩护主张是同硬件同软件下的容差内一致，跨硬件仅有统计等价。
 
-> **保证分层（T5 预写，2026-10-15）**：本报告的主张分两层。**机制层（toy，`train_recoverable.py`）**：受控环境下允许位级一致主张，证据为切分点 1–9 全扫掠。**真实模型层（T5，PyTorch MLP）**：无论实测结果如何，只允许"容差内一致 / 统计等价"主张，不允许位级主张——即便 CPU 全确定性开关下实测到位级一致，也仅作为有趣观察记录，不升级为保证。若实测在确定性开关全开下仍无法位级复现，将如实记录并解释（R1 调研预言此现象可能出现，属有价值的结果而非失败）。两层结论在 §3 与 T5 结果中分开陈述，不互相借用证据。
+> **保证分层（T5 预写，2026-10-15）**：本报告的主张分两层。**机制层（toy，`toy/train_recoverable.py`）**：受控环境下允许位级一致主张，证据为切分点 1–9 全扫掠。**真实模型层（T5，PyTorch MLP）**：无论实测结果如何，只允许"容差内一致 / 统计等价"主张，不允许位级主张——即便 CPU 全确定性开关下实测到位级一致，也仅作为有趣观察记录，不升级为保证。若实测在确定性开关全开下仍无法位级复现，将如实记录并解释（R1 调研预言此现象可能出现，属有价值的结果而非失败）。两层结论在 §3 与 T5 结果中分开陈述，不互相借用证据。
 
 ### 4.1 对照：本 toy 与 PyTorch 生产训练的保证（R1 调研汇总）
 
@@ -109,7 +112,7 @@ python3 train_recoverable.py selftest                          # 负例测试
 
 - toy 模型维度为 1，无真实数据管道；结论用于说明机制，不用于估计真实训练中的偏差量级。
 - `compare` 在单进程内完成，未测试跨进程/跨机恢复（JSON 往返已隐含跨进程语义）。
-- 位级等价证据密度：2 个切分点；切分点 1–9 全覆盖可作为后续加强（见 `PLAN.md` 后续行动）。
+- 位级等价证据密度：2 个切分点；切分点 1–9 全覆盖可作为后续加强（见 `docs/PLAN.md` 后续行动）。
 - 部分恢复的偏差大小依赖 toy 的噪声幅度 σ=0.05，不可外推到真实任务。
 
 ## 5A. 未验证风险登记（提交时仍开放）
@@ -125,11 +128,11 @@ python3 train_recoverable.py selftest                          # 负例测试
 
 ## 6. 文件清单
 
-- `recovery-baseline.py` —— 原始基线（未改动）
-- `check_riskiest_assumption.py` —— 风险假设最小检查
-- `train_recoverable.py` —— 主实验（AI 辅助实现，负责人验收）
-- `train_mlp.py` —— T5 真实模型层（AI 辅助实现，负责人验收；解释器：集群共享环境 pytorch_gpu_2.0.1）
-- `results/equivalence.md`、`results/negative_tests.txt`、`results/run_log.md` —— 机制层运行记录
-- `results_mlp/`（equivalence.md、negative_tests.txt、run_log.md、checkpoints/、logs/）—— 真实模型层运行记录
-- `data_mlp/` —— MNIST 数据（ossci S3 镜像下载）
-- `PLAN.md` —— 共同规划与验收记录；`DECISIONS.md` —— 四问决策回答（已整合原过程版 DECISION-JOURNAL.md）
+- `toy/recovery-baseline.py` —— 原始基线（未改动；写入 cwd 的 checkpoint.json）
+- `toy/check_riskiest_assumption.py` —— 风险假设最小检查
+- `toy/train_recoverable.py` —— 主实验（AI 辅助实现，负责人验收）
+- `mlp/train_mlp.py` —— T5 真实模型层（AI 辅助实现，负责人验收；解释器：集群共享环境 pytorch_gpu_2.0.1）
+- `toy/results/equivalence.md`、`toy/results/negative_tests.txt`、`toy/results/run_log.md` —— 机制层运行记录
+- `mlp/results/`（equivalence.md、negative_tests.txt、run_log.md、checkpoints/、logs/）—— 真实模型层运行记录
+- `mlp/data/` —— MNIST 数据（ossci S3 镜像下载，不入库）
+- `docs/PLAN.md` —— 共同规划与验收记录；`docs/DECISIONS.md` —— 四问决策回答（已整合原过程版 DECISION-JOURNAL.md）

@@ -47,6 +47,7 @@ Usage:
 import argparse
 import json
 import os
+import pathlib
 import random
 import subprocess
 import sys
@@ -64,8 +65,9 @@ REQUIRED_KEYS = ("format_version", "epoch", "model", "optimizer", "scheduler",
                  "step", "torch_rng", "numpy_rng", "python_rng",
                  "dataloader_gen")
 
-DATA_DIR = "./data_mlp"
-RESULTS_DIR = "results_mlp"
+SCRIPT_DIR = pathlib.Path(__file__).resolve().parent
+DATA_DIR = os.path.join(SCRIPT_DIR, "data")
+RESULTS_DIR = os.path.join(SCRIPT_DIR, "results")
 CKPT_DIR = os.path.join(RESULTS_DIR, "checkpoints")
 
 SEED_TORCH = 42

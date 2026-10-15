@@ -1,8 +1,8 @@
 # 风险最高的假设：识别、最小检查与结论
 
 - 日期：2026-10-15 识别并检查；2026-10-16 整理为独立交付文档
-- 检查脚本：`check_riskiest_assumption.py`（纯标准库，Python 3）
-- 复现：`cd recovery-baseline && python3 check_riskiest_assumption.py`
+- 检查脚本：`toy/check_riskiest_assumption.py`（纯标准库，Python 3）
+- 复现：`cd recovery-baseline && python3 toy/check_riskiest_assumption.py`
 
 ## 1. 假设（风险最高的一个）
 
@@ -11,12 +11,12 @@
 为什么它是风险最高的假设：
 
 1. **它是整个价值主张的地基。** "可恢复训练"的全部意义在于"恢复 ≡ 未中断"。若 A1 不成立，"恢复"与"重跑"只剩速度差异，没有等价性可言——后续所有设计（要不要做全状态保存、允不允许部分恢复）都建立在这块地基上。
-2. **它有最强的"显然成立"欺骗性。** 基线 `recovery-baseline.py` 保存 checkpoint 且输出正确，看起来"恢复没问题"；但它只存了 `step` + `weight`。把"能跑"误认为"等价"是最典型、代价最高的错误。
+2. **它有最强的"显然成立"欺骗性。** 基线 `toy/recovery-baseline.py` 保存 checkpoint 且输出正确，看起来"恢复没问题"；但它只存了 `step` + `weight`。把"能跑"误认为"等价"是最典型、代价最高的错误。
 3. **证伪成本不对称。** 若在投入大量实现（优化器状态、RNG 状态、框架对接）之后才发现等价假设有问题，返工代价远大于先花几分钟在 toy 层检验。
 
 ## 2. 最小但有效的检查
 
-**检查设计**：在基线 toy 上，不间断跑 10 步 vs 跑 4 步 → 写入 `checkpoint.json`（JSON 序列化往返）→ 读回 → 再跑 6 步，逐步对比最终状态（`==` 与 `repr` 两级，位级判定）。
+**检查设计**：在基线 toy 上，不间断跑 10 步 vs 跑 4 步 → 写入 `toy/checkpoint.json`（JSON 序列化往返）→ 读回 → 再跑 6 步，逐步对比最终状态（`==` 与 `repr` 两级，位级判定）。
 
 "最小"与"有效"的取舍：
 
