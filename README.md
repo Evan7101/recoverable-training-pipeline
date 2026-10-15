@@ -53,10 +53,11 @@ python3 toy/check_riskiest_assumption.py
 python3 toy/train_recoverable.py compare --total 10 --splits 1 2 3 4 5 6 7 8 9
 python3 toy/train_recoverable.py selftest
 
-# 真实模型层（需要 torch/torchvision；使用集群共享环境解释器；
+# 真实模型层（需要 torch/torchvision；`python` 用任意含两者的环境，
+# 本集群为共享 anaconda3 环境的 pytorch_gpu_2.0.1；
 # MNIST 首次运行时自动下载到 mlp/data/）
-/hpc2ssd/softwares/anaconda3/envs/pytorch_gpu_2.0.1/bin/python mlp/train_mlp.py compare --epochs 3 --split-epoch 1 --split-batch 47
-/hpc2ssd/softwares/anaconda3/envs/pytorch_gpu_2.0.1/bin/python mlp/train_mlp.py selftest
+python mlp/train_mlp.py compare --epochs 3 --split-epoch 1 --split-batch 47
+python mlp/train_mlp.py selftest
 ```
 
 ## 说明

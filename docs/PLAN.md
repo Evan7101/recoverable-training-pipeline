@@ -102,7 +102,7 @@
 
 **会话 4（2026-10-15）**：新增 T5 真实模型层（P1）。环境侦察（便宜优先）：Python 3.13.9、numpy 2.5.3 在位；torch/torchvision 未安装；网络部分可达——PyPI 与 download.pytorch.org 返回 200（pip 安装 torch CPU 版可行），ossci-datasets S3 返回 403（桶列表的正常响应，文件级 GET 待 T5 实测），yann.lecun.com 超时（弃用该源）。决策：按用户指令走 hpc-environment 技能建环境装 torch；数据集优先 MNIST（torchvision 默认 S3 镜像），若下载不通则暂停报告选项，不静默退回合成数据。玩具层（toy/train_recoverable.py 与 toy/results/）保持不动，仍作为机制层位级证据。
 
-**环境定案（hpc-environment 技能，会话 4）**：集群共享 anaconda3 已有 `pytorch_gpu_2.0.1` 环境（python 3.11.4、torch 2.0.1+cu118、torchvision 0.15.2、numpy 1.24.1），登录节点 CPU 路径实测可用（cuda.is_available()=False），**直接复用、零安装**（技能优先复用原则）。pip 全局镜像为阿里云（安装后备方案，本次未用）。T5 一律使用该解释器：`/hpc2ssd/softwares/anaconda3/envs/pytorch_gpu_2.0.1/bin/python`。
+**环境定案（hpc-environment 技能，会话 4）**：集群共享 anaconda3 已有 `pytorch_gpu_2.0.1` 环境（python 3.11.4、torch 2.0.1+cu118、torchvision 0.15.2、numpy 1.24.1），登录节点 CPU 路径实测可用（cuda.is_available()=False），**直接复用、零安装**（技能优先复用原则）。pip 全局镜像为阿里云（安装后备方案，本次未用）。T5 一律使用该环境的 python 解释器（本机绝对路径略；即集群 anaconda3 的 envs/pytorch_gpu_2.0.1）。
 
 **T5 实施与验收（会话 4 续，2026-10-15）**：派发会话 C（coder）实现真实模型层。关键结果：全状态恢复在两个切分点（epoch 1 边界 / 全局 batch 47 中周期点）max param diff=0.0、allclose=True，并观察到位级一致（按预写边界仅作观察，不升级为保证）；两类部分恢复均改变最终测试精度（|Δacc| 0.8–2.0%）。开发中发现并修复两个真实 bug（中周期停止的 epoch/step 不一致；torch 2.0.1 RandomSampler 每轮重新 randperm 导致的中周期续跑错位——通过快照并回绕 shuffle generator 修复），已记入 run_log。负责人独立复跑 compare：exit=0 且 equivalence.md md5 与原厂一致；selftest 5/5 亲验；抽查确认 RNG 覆盖、四源 RNG 存载、预分段位级验证（验证而非假设）均真实。
 

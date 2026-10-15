@@ -1,7 +1,7 @@
 # Run log — recoverable-training experiment
 
 Date: 2026-10-15. Machine: CPU-only Linux node, Python 3.13.9, stdlib only.
-All commands run from `/hpc2hdd/home/ypu159/aw-tmp/recovery-baseline/`.
+All commands run from the repository root (`recovery-baseline/`).
 
 ## 1. One uninterrupted run
 

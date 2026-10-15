@@ -1,11 +1,12 @@
 # Run log — real model layer (T5)
 
-Interpreter for every command:
-`/hpc2ssd/softwares/anaconda3/envs/pytorch_gpu_2.0.1/bin/python`
+Interpreter for every command: the `python` of a torch-enabled conda env
+(cluster-shared anaconda3 env `pytorch_gpu_2.0.1`; absolute path omitted for
+portability — recorded commands below use `python` verbatim)
 (python 3.11.4, torch 2.0.1+cu118, torchvision 0.15.2+cu118, numpy 1.24.1;
 CPU only, `torch.set_num_threads(1)` inside the program).
-Working directory: `recovery-baseline/`. No timestamps are recorded by
-design; full raw captures of every step are kept in `results_mlp/logs/`.
+Working directory: repository root. No timestamps are recorded by
+design; full raw captures of every step are kept in `mlp/results/logs/`.
 
 ## 1. Environment probe + shuffle-RNG source inspection
 

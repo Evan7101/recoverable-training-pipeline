@@ -6,7 +6,7 @@
 
 ## 1. 运行命令（全部可复现）
 
-以下命令在仓库根目录（`recovery-baseline/`）执行；机制层用系统 `python3`，真实模型层用集群共享环境解释器 `/hpc2ssd/softwares/anaconda3/envs/pytorch_gpu_2.0.1/bin/python`。
+以下命令在仓库根目录（`recovery-baseline/`）执行；机制层用系统 `python3`，真实模型层的 `python` 需为含 torch/torchvision 的解释器（本集群复用共享 anaconda3 环境的 `pytorch_gpu_2.0.1`，其他环境 `pip install torch torchvision` 亦可）。
 
 ```bash
 python3 toy/recovery-baseline.py                                   # 基线（写入 cwd 的 checkpoint.json）
@@ -17,8 +17,8 @@ python3 toy/train_recoverable.py run --total 10 --checkpoint toy/results/manual_
 python3 toy/train_recoverable.py compare --total 10 --splits 4 7   # 等价性对比
 python3 toy/train_recoverable.py compare --total 10 --splits 1 2 3 4 5 6 7 8 9  # 全切分点扫掠
 python3 toy/train_recoverable.py selftest                          # 负例测试
-/hpc2ssd/softwares/anaconda3/envs/pytorch_gpu_2.0.1/bin/python mlp/train_mlp.py compare --epochs 3 --split-epoch 1 --split-batch 47
-/hpc2ssd/softwares/anaconda3/envs/pytorch_gpu_2.0.1/bin/python mlp/train_mlp.py selftest
+python mlp/train_mlp.py compare --epochs 3 --split-epoch 1 --split-batch 47
+python mlp/train_mlp.py selftest
 ```
 
 ## 2. 模型与 checkpoint 设计
